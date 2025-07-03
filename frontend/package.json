@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "VITE_CODESPACE_BACKEND_URL=$CODESPACE_BACKEND_URL vite",
+    "build": "VITE_CODESPACE_BACKEND_URL=$CODESPACE_BACKEND_URL vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },

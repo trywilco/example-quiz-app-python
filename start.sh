@@ -12,25 +12,125 @@ cleanup() {
 # Set up cleanup trap
 trap cleanup SIGINT SIGTERM
 
+# Check and install required Python packages if not present
+echo "🔍 Checking Python environment..."
+if ! dpkg -l | grep -q python3-venv; then
+    echo "📦 Installing required Python packages (python3-venv, python3-pip)..."
+    sudo apt update -qq
+    sudo apt install -y python3-venv python3-pip
+    echo "✅ Python packages installed successfully"
+else
+    echo "✅ Python3-venv already installed"
+fi
+
+# Check if Flask is installed
+if ! python3 -c "import flask" 2>/dev/null; then
+    echo "📦 Installing Flask and Flask-CORS..."
+    pip3 install flask flask-cors
+    echo "✅ Flask installed successfully"
+else
+    echo "✅ Flask already available"
+fi
+
 # Check if virtual environment exists, create if not
+echo "🐍 Setting up Python environment..."
 if [ ! -d "backend/venv" ]; then
     echo "📦 Creating virtual environment..."
     cd backend
-    python -m venv venv
+    if python3 -m venv venv 2>/dev/null; then
+        echo "✅ Virtual environment created successfully"
+        # Install Flask in the virtual environment
+        source venv/bin/activate
+        pip install flask flask-cors
+        echo "✅ Flask installed in virtual environment"
+        USE_VENV=true
+    else
+        echo "⚠️  Failed to create virtual environment, using global Python"
+        USE_VENV=false
+    fi
+    cd ..
+else
+    echo "📦 Virtual environment exists, checking activation..."
+    cd backend
+    if [ -f "venv/bin/activate" ]; then
+        echo "✅ Virtual environment looks good, activating..."
+        source venv/bin/activate
+        # Ensure Flask is installed in venv
+        if ! python -c "import flask" 2>/dev/null; then
+            echo "📦 Installing Flask in virtual environment..."
+            pip install flask flask-cors
+        fi
+        USE_VENV=true
+    else
+        echo "⚠️  Virtual environment damaged, using global Python"
+        USE_VENV=false
+    fi
     cd ..
 fi
 
 # Start backend
 echo "🚀 Starting Flask backend..."
 cd backend
-source venv/bin/activate 2>/dev/null || venv/Scripts/activate 2>/dev/null
-pip install -r requirements.txt >/dev/null 2>&1
-python app.py &
+
+# Check if we're in the right directory
+echo "📁 Current directory: $(pwd)"
+echo "📄 Files in backend directory:"
+ls -la
+
+# Show Python environment info
+if [ "$USE_VENV" = true ]; then
+    echo "🐍 Using virtual environment..."
+    source venv/bin/activate 2>/dev/null || USE_VENV=false
+fi
+
+if [ "$USE_VENV" = true ]; then
+    echo "✅ Virtual environment activated"
+    echo "🔍 Which python: $(which python)"
+    echo "🔍 Python version: $(python --version)"
+    echo "🔍 Pip version: $(pip --version)"
+    PYTHON_CMD="python"
+else
+    echo "🐍 Using global Python installation..."
+    echo "🔍 Which python3: $(which python3)"
+    echo "🔍 Python3 version: $(python3 --version)"
+    echo "� Pip3 version: $(pip3 --version)"
+    PYTHON_CMD="python3"
+fi
+
+# Test if we can import Flask
+echo "🧪 Testing Flask import..."
+$PYTHON_CMD -c "import flask; print('✅ Flask version:', flask.__version__)" 2>/dev/null || echo "❌ Flask import failed!"
+
+echo "🔍 Backend logs will be shown below:"
+echo "🚀 Starting Python app.py with $PYTHON_CMD..."
+$PYTHON_CMD app.py 2>&1 | while IFS= read -r line; do echo "[BACKEND] $line"; done &
 BACKEND_PID=$!
 cd ..
 
 # Wait a moment for backend to start
-sleep 3
+echo "⏳ Waiting for backend to start..."
+sleep 5
+
+# Check if the backend process is still running
+if kill -0 $BACKEND_PID 2>/dev/null; then
+    echo "✅ Backend process is running (PID: $BACKEND_PID)"
+    
+    # Test if backend is responding
+    echo "🧪 Testing backend connectivity..."
+    if command -v curl >/dev/null 2>&1; then
+        echo "Testing with curl..."
+        curl -f http://localhost:8080/health 2>/dev/null && echo "✅ Backend health check passed!" || echo "❌ Backend health check failed!"
+    else
+        echo "Testing with wget..."
+        wget -q --spider http://localhost:8080/health && echo "✅ Backend health check passed!" || echo "❌ Backend health check failed!"
+    fi
+else
+    echo "❌ Backend process has stopped!"
+fi
+
+# Show what's listening on port 8080
+echo "🔍 Checking what's listening on port 8080:"
+netstat -tlnp 2>/dev/null | grep :8080 || echo "Nothing listening on port 8080"
 
 # Start frontend
 echo "⚛️  Starting React frontend..."

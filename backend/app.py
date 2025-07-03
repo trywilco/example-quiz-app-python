@@ -2,10 +2,18 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json
 import uuid
+import logging
 from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # In-memory storage
 quiz_questions = [
@@ -88,6 +96,7 @@ question_stats = {str(q["id"]): {"total_attempts": 0, "correct_answers": 0} for 
 @app.route('/api/questions', methods=['GET'])
 def get_questions():
     """Return all quiz questions"""
+    logger.info("GET /api/questions - Fetching quiz questions")
     return jsonify({
         "questions": quiz_questions,
         "total": len(quiz_questions)
@@ -96,65 +105,97 @@ def get_questions():
 @app.route('/api/submit', methods=['POST'])
 def submit_answers():
     """Submit user answers and calculate results"""
-    data = request.get_json()
-    user_answers = data.get('answers', {})
-    session_id = data.get('session_id', str(uuid.uuid4()))
-    
-    # Calculate score and update statistics
-    results = []
-    correct_count = 0
-    
-    for question in quiz_questions:
-        question_id = str(question["id"])
-        user_answer = user_answers.get(question_id)
-        is_correct = user_answer == question["correct"]
+    try:
+        logger.info("POST /api/submit - Received submission request")
+        data = request.get_json()
         
-        if user_answer is not None:
-            # Update question statistics
-            question_stats[question_id]["total_attempts"] += 1
-            if is_correct:
-                question_stats[question_id]["correct_answers"] += 1
-                correct_count += 1
+        if data is None:
+            logger.error("No JSON data received")
+            return jsonify({"error": "No JSON data provided"}), 400
         
-        # Calculate success rate for this question
-        total_attempts = question_stats[question_id]["total_attempts"]
-        correct_answers = question_stats[question_id]["correct_answers"]
-        success_rate = (correct_answers / total_attempts * 100) if total_attempts > 0 else 0
+        logger.debug(f"Received data: {data}")
+        user_answers = data.get('answers', {})
+        session_id = data.get('session_id', str(uuid.uuid4()))
+        logger.info(f"Processing submission for session: {session_id}")
         
-        results.append({
-            "question_id": question["id"],
-            "question": question["question"],
-            "user_answer": user_answer,
-            "correct_answer": question["correct"],
-            "correct_option": question["options"][question["correct"]],
-            "is_correct": is_correct,
-            "success_rate": round(success_rate, 1)
+        # Calculate score and update statistics
+        results = []
+        correct_count = 0
+        
+        for question in quiz_questions:
+            question_id = str(question["id"])
+            user_answer = user_answers.get(question_id)
+            is_correct = user_answer == question["correct"]
+            
+            if user_answer is not None:
+                # Update question statistics
+                question_stats[question_id]["total_attempts"] += 1
+                if is_correct:
+                    question_stats[question_id]["correct_answers"] += 1
+                    correct_count += 1
+            
+            # Calculate success rate for this question
+            total_attempts = question_stats[question_id]["total_attempts"]
+            correct_answers = question_stats[question_id]["correct_answers"]
+            success_rate = (correct_answers / total_attempts * 100) if total_attempts > 0 else 0
+            
+            results.append({
+                "question_id": question["id"],
+                "question": question["question"],
+                "user_answer": user_answer,
+                "correct_answer": question["correct"],
+                "correct_option": question["options"][question["correct"]],
+                "is_correct": is_correct,
+                "success_rate": round(success_rate, 1)
+            })
+        
+        # Store session results
+        session_results = {
+            "answers": user_answers,
+            "results": results,
+            "score": correct_count,
+            "total": len(quiz_questions),
+            "percentage": round((correct_count / len(quiz_questions)) * 100, 1),
+            "completed_at": datetime.now().isoformat()
+        }
+        
+        user_sessions[session_id] = session_results
+        logger.info(f"Session {session_id} completed with score: {correct_count}/{len(quiz_questions)}")
+        
+        return jsonify({
+            "session_id": session_id,
+            "score": correct_count,
+            "total": len(quiz_questions),
+            "percentage": session_results["percentage"],
+            "results": results
         })
-    
-    # Store session results
-    session_results = {
-        "answers": user_answers,
-        "results": results,
-        "score": correct_count,
-        "total": len(quiz_questions),
-        "percentage": round((correct_count / len(quiz_questions)) * 100, 1),
-        "completed_at": datetime.now().isoformat()
-    }
-    
-    user_sessions[session_id] = session_results
-    
-    return jsonify({
-        "session_id": session_id,
-        "score": correct_count,
-        "total": len(quiz_questions),
-        "percentage": session_results["percentage"],
-        "results": results
-    })
+        
+    except Exception as e:
+        logger.error(f"Error processing submission: {str(e)}", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
     """Get overall question statistics"""
+    logger.info("GET /api/stats - Fetching question statistics")
     return jsonify(question_stats)
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Simple health check endpoint"""
+    logger.info("GET /health - Health check requested")
+    return jsonify({"status": "healthy", "message": "Backend is running"})
+
 if __name__ == '__main__':
-    app.run(debug=True, port=8080, host='0.0.0.0') 
+    import sys
+    print("🔧 DEBUG: Script is starting...")
+    print(f"🔧 DEBUG: Python version: {sys.version}")
+    print("🔧 DEBUG: About to start Flask...")
+    logger.info("Starting Flask application on 0.0.0.0:8080")
+    print("🔧 DEBUG: Flask app.run() called")
+    try:
+        app.run(debug=True, port=8080, host='0.0.0.0')
+    except Exception as e:
+        print(f"❌ ERROR starting Flask: {e}")
+        import traceback
+        traceback.print_exc() 

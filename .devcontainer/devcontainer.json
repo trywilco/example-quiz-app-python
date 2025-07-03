@@ -6,7 +6,7 @@
             "extensions": ["GitHub.copilot", "GitHub.copilot-chat"]
         }
     },
-    "forwardPorts": [3000, 5173, 3009],
+    "forwardPorts": [3000, 8080, 3009],
     "portsAttributes": {
         "3000": {
         "label": "Frontend",
