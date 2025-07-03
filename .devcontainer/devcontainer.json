@@ -1,0 +1,30 @@
+{
+    "name": "Anythink Development Container",
+    "image": "public.ecr.aws/v0a2l7y2/wilco/anythink-devcontainer:latest",
+    "customizations": {
+        "vscode": {
+            "extensions": ["GitHub.copilot", "GitHub.copilot-chat"]
+        }
+    },
+    "forwardPorts": [3000, 5173, 3009],
+    "portsAttributes": {
+        "3000": {
+        "label": "Backend",
+        "elevateIfNeeded": true,
+        "requireLocalPort": true,
+        "onAutoForward": "silent"
+        },
+        "5173": {
+        "label": "Frontend",
+        "elevateIfNeeded": true,
+        "requireLocalPort": true,
+        "onAutoForward": "silent"
+        },
+        "3009": {
+        "label": "Wilco Agent",
+        "elevateIfNeeded": true,
+        "requireLocalPort": true,
+        "onAutoForward": "silent"
+        }
+    }
+}
