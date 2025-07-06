@@ -140,6 +140,10 @@ npm run dev &
 FRONTEND_PID=$!
 cd ..
 
+# Turn port visibility
+gh codespace ports visibility 3000:public --codespace $CODESPACE_NAME
+gh codespace ports visibility 3001:public --codespace $CODESPACE_NAME
+
 echo ""
 echo "🎯 Quiz app is starting up!"
 echo "📱 Frontend: http://localhost:3001"
