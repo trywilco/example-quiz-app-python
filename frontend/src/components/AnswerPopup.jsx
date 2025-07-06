@@ -10,7 +10,7 @@ const AnswerPopup = ({ data, onClose }) => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/stats')
+      const response = await fetch(`${import.meta.env.VITE_CODESPACE_BACKEND_URL || 'http://localhost:3000'}/api/stats`)
       if (response.ok) {
         const statsData = await response.json()
         const questionStats = statsData[question.id.toString()]

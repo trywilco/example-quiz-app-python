@@ -21,7 +21,7 @@ const Quiz = ({ onRestart }) => {
   const fetchQuestions = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${import.meta.env.VITE_CODESPACE_BACKEND_URL || 'http://localhost:8080'}/api/questions`)
+      const response = await fetch(`${import.meta.env.VITE_CODESPACE_BACKEND_URL || 'http://localhost:3000'}/api/questions`)
       if (!response.ok) throw new Error('Failed to fetch questions')
       const data = await response.json()
       setQuestions(data.questions)

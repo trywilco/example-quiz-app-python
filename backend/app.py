@@ -191,10 +191,10 @@ if __name__ == '__main__':
     print("🔧 DEBUG: Script is starting...")
     print(f"🔧 DEBUG: Python version: {sys.version}")
     print("🔧 DEBUG: About to start Flask...")
-    logger.info("Starting Flask application on 0.0.0.0:8080")
+    logger.info("Starting Flask application on 0.0.0.0:3000")
     print("🔧 DEBUG: Flask app.run() called")
     try:
-        app.run(debug=True, port=8080, host='0.0.0.0')
+        app.run(debug=True, port=3000, host='0.0.0.0')
     except Exception as e:
         print(f"❌ ERROR starting Flask: {e}")
         import traceback

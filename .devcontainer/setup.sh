@@ -7,7 +7,7 @@ export ENGINE_EVENT_ENDPOINT="${ENGINE_BASE_URL}/users/${WILCO_ID}/event"
 curl -L -X POST "${ENGINE_EVENT_ENDPOINT}" -H "Content-Type: application/json" --data-raw "{ \"event\": \"github_codespace_started\" }"
 
 gh codespace ports visibility 3000:public --codespace $CODESPACE_NAME
-gh codespace ports visibility 8080:public --codespace $CODESPACE_NAME
+gh codespace ports visibility 3001:public --codespace $CODESPACE_NAME
 
 # Export backend envs when in codespaces
 echo "export CODESPACE_BACKEND_HOST=\"${CODESPACE_BACKEND_HOST}\"" >> ~/.bashrc

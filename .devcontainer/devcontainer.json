@@ -6,15 +6,15 @@
             "extensions": ["GitHub.copilot", "GitHub.copilot-chat"]
         }
     },
-    "forwardPorts": [3000, 8080, 3009],
+    "forwardPorts": [3001, 3000, 3009],
     "portsAttributes": {
-        "3000": {
+        "3001": {
         "label": "Frontend",
         "elevateIfNeeded": true,
         "requireLocalPort": true,
         "onAutoForward": "silent"
         },
-        "8080": {
+        "3000": {
         "label": "Backend",
         "elevateIfNeeded": true,
         "requireLocalPort": true,

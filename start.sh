@@ -119,18 +119,18 @@ if kill -0 $BACKEND_PID 2>/dev/null; then
     echo "🧪 Testing backend connectivity..."
     if command -v curl >/dev/null 2>&1; then
         echo "Testing with curl..."
-        curl -f http://localhost:8080/health 2>/dev/null && echo "✅ Backend health check passed!" || echo "❌ Backend health check failed!"
+        curl -f http://localhost:3000/health 2>/dev/null && echo "✅ Backend health check passed!" || echo "❌ Backend health check failed!"
     else
         echo "Testing with wget..."
-        wget -q --spider http://localhost:8080/health && echo "✅ Backend health check passed!" || echo "❌ Backend health check failed!"
+        wget -q --spider http://localhost:3000/health && echo "✅ Backend health check passed!" || echo "❌ Backend health check failed!"
     fi
 else
     echo "❌ Backend process has stopped!"
 fi
 
-# Show what's listening on port 8080
-echo "🔍 Checking what's listening on port 8080:"
-netstat -tlnp 2>/dev/null | grep :8080 || echo "Nothing listening on port 8080"
+# Show what's listening on port 3000
+echo "🔍 Checking what's listening on port 3000:"
+netstat -tlnp 2>/dev/null | grep :3000 || echo "Nothing listening on port 3000"
 
 # Start frontend
 echo "⚛️  Starting React frontend..."
@@ -142,8 +142,8 @@ cd ..
 
 echo ""
 echo "🎯 Quiz app is starting up!"
-echo "📱 Frontend: http://localhost:3000"
-echo "🔧 Backend:  http://localhost:8080"
+echo "📱 Frontend: http://localhost:3001"
+echo "🔧 Backend:  http://localhost:3000"
 echo ""
 echo "Press Ctrl+C to stop both services"
 
